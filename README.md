@@ -64,10 +64,10 @@ vmw_getcert uses the following options:
 ```
 Usage: vmw_getcert [-hv] -c CERT_CN [OPTIONS] FQDN
 This script requests a certificate from FreeIPA using ipa-getcert and calls a partner
-script to deploy the certificate to a Palo Alto firewall or Panorama.
+script to deploy the certificate to a VMware appliance via REST API.
 
-    FQDN              Fully qualified name of the VMware appliance interface. Must be
-                      reachable from this host on port TCP/443.
+    FQDN              Fully qualified name of the VMware appliance web interface.
+                      Must be reachable from this host on port TCP/443.
     -c CERT_CN        REQUIRED. Common Name (Subject) of the certificate (must be a
                       FQDN). Will also present in the certificate as a SAN.
 
@@ -89,11 +89,11 @@ Run vmw_instcert with sudo, it will test if it's run with uid 0 (root). Ensure t
 vmw_instcert uses the same options, minus the FreeIPA specifics:
 ```
 Usage: vmw_instcert [-hv] -c CERT_CN FQDN
-This script uploads a certificate issued by ipa-getcert to a Palo Alto firewall
-or Panorama and optionally adds it to up to two SSL/TLS Profiles.
+This script uploads a certificate issued by ipa-getcert to a VMware appliance via
+REST API.
 
-    FQDN              Fully qualified name of the Palo Alto firewall or Panorama
-                      interface. Must be reachable from this host on port TCP/443.
+    FQDN              Fully qualified name of the VMware appliance web interface.
+                      Must be reachable from this host on port TCP/443.
     -c CERT_CN        REQUIRED. Common Name (Subject) of the certificate, to find
                       the certificate and key files.
 
