@@ -62,24 +62,25 @@ Run vmw_getcert without sudo, doing so may block access to your keytab and then 
 
 vmw_getcert uses the following options:
 ```
-Usage: vmw_getcert [-hv] -c CERT_CN [OPTIONS] FQDN
-This script requests a certificate from FreeIPA using ipa-getcert and calls a partner
-script to deploy the certificate to a VMware appliance via REST API.
+Usage: vmw_getcert [-hv] -c CERT_CN -a CRED_FILE [OPTIONS] FQDN
+This script requests a certificate from FreeIPA using ipa-getcert and calls a
+partner script to deploy the certificate to a VMware appliance via REST API.
 
-    FQDN              Fully qualified name of the VMware appliance web interface.
-                      Must be reachable from this host on port TCP/443.
-    -c CERT_CN        REQUIRED. Common Name (Subject) of the certificate (must be a
-                      FQDN). Will also present in the certificate as a SAN.
-
+    FQDN          Fully qualified name of the VMware appliance web interface.
+                  Must be reachable from this host on port TCP/443.
+    -c CERT_CN    REQUIRED. Common Name (Subject) of the certificate (must be a
+                  FQDN). Will also present in the certificate as a SAN.
+    -a CRED_FILE  File with VMware credentials in plain text or base64 format.
+                  Defaults to /etc/ipa/.vmwrc
 OPTIONS:
-    -G TYPE           Type of key to be generated if one is not already in place.
-                      IPA CS uses RSA by default. (RSA, DSA, EC or ECDSA)
-    -b BITS           In case a new key pair needs to be generated, this option
-                      specifies the size of the key. Default: 2048 (RSA/DSA).
-                      EC: 256, 384 or 512. See certmonger.conf for the default.
+    -G TYPE       Type of key to be generated if one is not already in place.
+                  IPA CA uses RSA by default. (RSA, DSA, EC or ECDSA)
+    -b BITS       In case a new key pair needs to be generated, this option
+                  specifies the size of the key. Default: 2048 (RSA/DSA).
+                  EC: 256, 384 or 512. See certmonger.conf for the default.
 
-    -h                Display this help and exit.
-    -v                Verbose mode.
+    -h            Display this help and exit.
+    -v            Verbose mode.
 ```
 
 **Note:** FreeIPA only supports RSA keys. Hence the -G option is in preparation of future support of other keys. [More info](https://www.reddit.com/r/FreeIPA/comments/134puyw/freeipa_ca_pki_ecdsa_support/).
@@ -88,17 +89,19 @@ Run vmw_instcert with sudo, it will test if it's run with uid 0 (root). Ensure t
 
 vmw_instcert uses the same options, minus the FreeIPA specifics:
 ```
-Usage: vmw_instcert [-hv] -c CERT_CN FQDN
-This script uploads a certificate issued by ipa-getcert to a VMware appliance via
-REST API.
+Usage: vmw_instcert [-hv] -c CERT_CN -a CRED_FILE FQDN
+This script uploads a certificate issued by ipa-getcert to a VMware appliance
+via REST API.
 
-    FQDN              Fully qualified name of the VMware appliance web interface.
-                      Must be reachable from this host on port TCP/443.
-    -c CERT_CN        REQUIRED. Common Name (Subject) of the certificate, to find
-                      the certificate and key files.
+    FQDN          Fully qualified name of the VMware appliance web interface.
+                  Must be reachable from this host on port TCP/443.
+    -c CERT_CN    REQUIRED. Common Name (Subject) of the certificate, to find
+                  the certificate and key files.
+    -a CRED_FILE  File with credentials in plain text or base64 format.
+                  Defaults to /etc/ipa/.vmwrc
 
-    -h                Display this help and exit.
-    -v                Verbose mode.
+    -h            Display this help and exit.
+    -v            Verbose mode.
 ```
 
 # Automated Renewal and Installation
