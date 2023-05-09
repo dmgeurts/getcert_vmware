@@ -1,0 +1,172 @@
+#!/bin/bash
+
+## Logging
+LOG="/var/log/vmw_instcert.log"
+wlog() {
+    printf "$*"
+    printf "[$(date --rfc-3339=seconds)]: $*" >> "$LOG"
+}
+trap 'wlog "ERROR - Certificate installation failed.\n"' TERM HUP
+
+## Usage info
+show_help() {
+cat << EOF
+Usage: ${0##*/} [-hv] -c CERT_CN -a CRED_FILE FQDN
+This script uploads a certificate issued by ipa-getcert to a VMware appliance
+via REST API.
+
+    FQDN          Fully qualified name of the VMware appliance web interface.
+                  Must be reachable from this host on port TCP/443.
+    -c CERT_CN    REQUIRED. Common Name (Subject) of the certificate, to find
+                  the certificate and key files.
+    -a CRED_FILE  File with credentials in plain text or base64 format.
+                  Defaults to /etc/ipa/.vmwrc
+
+    -h            Display this help and exit.
+    -v            Verbose mode.
+EOF
+}
+
+## Fixed variables
+VERBOSE=0
+OPTIND=1
+
+## Read/interpret optional arguments
+while getopts c:a:vh opt; do
+    case $opt in
+        c)  CERT_CN=$OPTARG
+            ;;
+        v)  VERBOSE=$((VERBOSE+1))
+            ;;
+        a)  CRED_FILE=$OPTARG
+            ;;
+        h)  show_help
+            exit 0
+            ;;
+        *)  show_help >&2
+            exit 1
+            ;;
+    esac
+done
+shift "$((OPTIND-1))"   # Discard the options and sentinel --
+
+## This script must be run as root
+if [ "$EUID" -ne 0 ]; then
+    echo "Please run as root"
+    exit
+fi
+
+## Start logging
+wlog "START of vmw_instcert.\n"
+
+# Check that a Common Name name was given
+if [[ -z $CERT_CN ]]; then
+    wlog "ERROR: Missing -c, a certificate requires a Common Name.\n\n"
+    show_help >&2
+    exit 1
+elif grep -q -P '(?=^.{4,253}$)(^((?!-)[a-zA-Z0-9-]{1,63}(?<!-)\.)+[a-zA-Z]{2,63}$)' <<< "$CERT_CN"; then
+    CERT_CN=${CERT_CN,,}
+    wlog "Certificate Common Name: $CERT_CN\n"
+fi
+
+# Check that credentials are available
+CRED_FILE=${CRED_FILE:=/etc/ipa/.vmwrc}
+if [[ ! -f $CRED_FILE]]; then
+    wlog "ERROR: File not found: $CRED_FILE\n"
+    exit 5
+fi
+if AUTH64=$(grep -P '^key=' "$CRED_FILE"); then
+    AUTH64="${AUTH64#key=}"
+    if [[ -n ${AUTH64+x} ]]; then
+        (( $VERBOSE > 0 )) && wlog "Key found in: $CRED_FILE\n"
+    fi
+else
+    UID=(grep -P '^username=' "$CRED_FILE")
+    PWD=(grep -P '^password=' "$CRED_FILE")
+    AUTH64=(base64 <<< "${UID#username=}:${PWD#password=}")
+    UID="" && PWD=""
+    if [[ -n ${AUTH64+x} ]]; then
+        (( $VERBOSE > 0 )) && wlog "Credentials found in: $CRED_FILE\n"
+    fi
+fi
+if [[ -z ${AUTH64+x} ]]; then
+    wlog "ERROR: No credentials found in: $CRED_FILE\n"
+    exit 5
+fi
+
+# Check that a single valid FQDN was parsed for the Palo Alto API interface
+if grep -q -P '(?=^.{4,253}$)(^((?!-)[a-zA-Z0-9-]{1,63}\.)+[a-zA-Z]{2,63}$)' <<< "$@"; then
+    VMW_MGMT="${@,,}"
+    (( $VERBOSE > 0 )) && wlog "VMW_FQDN: $VMW_MGMT\n"
+    if ! nc -z $VMW_MGMT 443 2>/dev/null; then
+        wlog "ERROR: VMware appliance unreachable at: https://$VMW_MGMT/\n"
+        exit 4
+    fi
+else
+    wlog "ERROR: A valid FQDN is required to issue a certificate.\n"
+    wlog "Parsed string: $@\n\n"
+    show_help >&2
+    exit 4
+fi
+
+# Authenticate the REST API session
+AUTH_TYPE=${AUTH_TYPE:=Basic}
+# The only supported method at the moment.
+# https://developer.vmware.com/apis/vsphere-automation/latest/cis/api/session/post/
+if [[ "$AUTH_TYPE" == "Basic" ]]; then
+    SKEY=`curl -k -X POST https://$VMW_FQDN/api/session -H "Authorization: $AUTH_TYPE $AUTH64"| tr -d \"`
+else
+    wlog "ERROR: Wrong authentication type: $AUTH_TYPE\n"
+    exit 9
+fi
+printf 'Session-key: %s\n' "$SKEY"
+
+## Upload and install the certificate to VMware appliance.
+# Verify state of the certificate is MONITORING or POST_SAVED_CERT
+KEY_FILE="/etc/ssl/private/${CERT_CN}.key"
+CRT_FILE="/etc/ssl/certs/${CERT_CN}.crt"
+CERT_STATUS=$(ipa-getcert status -f "$CRT_FILE" -v)
+# Verify both certificate and key files exist
+if [[ ! -f "$KEY_FILE" ]] || [[ ! -f "$CRT_FILE" ]]; then
+    wlog "ERROR: Missing certificate or key files. Check if the following files exist:\n"
+    wlog "Key file: $KEY_FILE\nCert file: $CRT_FILE\n"
+    exit 10
+elif ! [[ "$CERT_STATUS" =~ (MONITORING|POST_SAVED_CERT) ]]; then
+    wlog 'ERROR: Problem encountered with the requested certificate.\nInstallation aborted, verify that the certificate status is "MONITORING".\n'
+    exit 11
+else
+    (( $VERBOSE > 0 )) && wlog "Certmonger certificate ${CERT_STATUS,}\n"
+    # Replace \r\n with \n in the certificate and key data, then formulate the json string for the certificate
+    KEY="$(awk -v ORS='\\n' '1' $KEY_FILE)"
+    CRT="$(awk -v ORS='\\n' '1' $CRT_FILE)"
+    CRT_JSON_FMT='{"cert":"%s","key":"%s"}'
+    CRT_JSON=`$(printf "$CRT_JSON_FMT" "$CRT" "$KEY")`
+    # Do the same for the root certificate
+    ROOT="$(awk -v ORS='\\n' '1' /etc/ipa/ca.crt)"
+    ROOT_JSON_FMT='{"cert_chain":["%s"]}'
+    ROOT_JSON=`$(printf "$ROOT_JSON_FMT" "$ROOT")`
+fi
+printf '\n'
+
+# Upload it to the VMware appliance
+URL="https://$VMW_MGMT/api/vcenter/certificate-managemente/vcenter"
+OUTPUT=$(curl -k -X POST "$URL/trusted-root-chain" -H "vmware-api-session-id: $SKEY" -H "Content-Type: application/json" -d "$ROOT_JSON")
+ROOT_STATUS=$?
+wlog "XML API output for root certificate: $OUTPUT\n"
+if [ $ROOT_STATUS -eq 0 ]; then
+    OUTPUT=$(curl -k -X PUT "$URL/tls" -H "vmware-api-session-id: $SKEY" -H "Content-Type: application/json" -d "$CRT_JSON")
+    CRT_STATUS=$?
+    wlog "XML API output for certificate: $OUTPUT\n"
+    if [ $CRT_STATUS -eq 0 ]; then
+        wlog "Finished uploading certificate for: $CERT_CN\n"
+    elif [ $CRT_STATUS -ne 0 ]; then
+        wlog "ERROR: Upload of certificate failed.\n"
+        exit 12
+    fi
+else
+    wlog "ERROR: Upload of root certificate failed.\n"
+    exit 12
+fi
+
+wlog "END - Finished certificate installation to: $VMW_MGMT\n"
+
