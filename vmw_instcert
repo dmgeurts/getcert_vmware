@@ -94,7 +94,7 @@ if [[ -z ${AUTH64+x} ]]; then
     exit 5
 fi
 
-# Check that a single valid FQDN was parsed for the Palo Alto API interface
+# Check that a single valid FQDN was parsed for the vCenter API interface
 if grep -q -P '(?=^.{4,253}$)(^((?!-)[a-zA-Z0-9-]{1,63}\.)+[a-zA-Z]{2,63}$)' <<< "$@"; then
     VMW_MGMT="${@,,}"
     (( $VERBOSE > 0 )) && wlog "VMW_FQDN: $VMW_MGMT\n"
@@ -121,7 +121,7 @@ else
 fi
 printf 'Session-key: %s\n' "$SKEY"
 
-## Upload and install the certificate to VMware appliance.
+## Upload and install the certificate to vCenter appliance.
 # Verify state of the certificate is MONITORING or POST_SAVED_CERT
 KEY_FILE="/etc/ssl/private/${CERT_CN}.key"
 CRT_FILE="/etc/ssl/certs/${CERT_CN}.crt"
@@ -148,7 +148,7 @@ else
 fi
 printf '\n'
 
-# Upload it to the VMware appliance
+# Upload it to the vCenter appliance
 URL="https://$VMW_MGMT/api/vcenter/certificate-managemente/vcenter"
 OUTPUT=$(curl -k -X POST "$URL/trusted-root-chain" -H "vmware-api-session-id: $SKEY" -H "Content-Type: application/json" -d "$ROOT_JSON")
 ROOT_STATUS=$?
@@ -169,4 +169,3 @@ else
 fi
 
 wlog "END - Finished certificate installation to: $VMW_MGMT\n"
-
