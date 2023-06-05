@@ -97,7 +97,7 @@ fi
 # Check that a single valid FQDN was parsed for the vCenter API interface
 if grep -q -P '(?=^.{4,253}$)(^((?!-)[a-zA-Z0-9-]{1,63}\.)+[a-zA-Z]{2,63}$)' <<< "$@"; then
     VMW_MGMT="${@,,}"
-    (( $VERBOSE > 0 )) && wlog "VMW_FQDN: $VMW_MGMT\n"
+    (( $VERBOSE > 0 )) && wlog "VMW_MGMT: $VMW_MGMT\n"
     if ! nc -z $VMW_MGMT 443 2>/dev/null; then
         wlog "ERROR: VMware appliance unreachable at: https://$VMW_MGMT/\n"
         exit 4
@@ -114,8 +114,8 @@ AUTH_TYPE=${AUTH_TYPE:=Basic}
 # The only supported method at the moment.
 # https://developer.vmware.com/apis/vsphere-automation/latest/cis/api/session/post/
 if [[ "$AUTH_TYPE" == "Basic" ]]; then
-    TRY="curl -k -X POST https://$VMW_FQDN/api/session -H \"Authorization: $AUTH_TYPE $AUTH64\""
-    (( $VERBOSE > 0 )) && printf 'Obtaining session key with: %s' "$TRY"
+    TRY="curl -k -X POST https://$VMW_MGMT/api/session -H \"Authorization: $AUTH_TYPE $AUTH64\""
+    (( $VERBOSE > 0 )) && printf 'Obtaining session key with: %s\n' "$TRY"
     SKEY=$($TRY)
 else
     wlog "ERROR: Wrong authentication type: $AUTH_TYPE\n"
