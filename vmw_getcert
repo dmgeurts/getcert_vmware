@@ -14,7 +14,8 @@ partner script to deploy the certificate to a VMware appliance via REST API.
     -a CRED_FILE      File with VMware credentials in plain text or base64 format.
                       Defaults to /etc/ipa/.vmwrc
 OPTIONS:
-    -i IP4            IPv4 address of the vCenter server, for inclusion in the SAN.
+    -i                Resolve CERT_CN to an IP address, for inclusion in the SAN.
+    -I IP4            IPv4 address of the vCenter server, for inclusion in the SAN.
     -S SERVICE        Service of the Service Principal. Default: HTTP.
     -T CERT_PROFILE   Ask IPA to process the request using the named profile or
                       template.
@@ -41,7 +42,9 @@ while getopts c:a:G:b:vh opt; do
             ;;
         a)  CRED_FILE=$OPTARG
             ;;
-        i)  IP4=$OPTARG
+        i)  IP4="CERT_CN"
+            ;;
+        I)  IP4=$OPTARG
             ;;
         S)  SERVICE=$OPTARG
             ;;
@@ -77,6 +80,8 @@ if [[ -z $CERT_CN ]]; then
 elif grep -q -P '(?=^.{4,253}$)(^((?!-)[a-zA-Z0-9-]{1,63}(?<!-)\.)+[a-zA-Z]{2,63}$)' <<< "$CERT_CN"; then
     CERT_CN=${CERT_CN,,}
     (( $VERBOSE > 0 )) && printf 'Certificate Common Name: %s\n' "$CERT_CN"
+else
+    printf 'ERROR: Invalid FQDN given for CERT_CN: %s\n' "$CERT_CN"
 fi
 
 # Check that credentials are available
@@ -96,7 +101,9 @@ fi
 
 # Check that the IPv4 address is valid if parsed
 if [[ ! -z $IP4 ]]; then
-    if expr "$OPTARG" : '[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*$' >/dev/null; then
+    if [[ $IP4 == "CERT_CN" ]]; then
+        IP4=$(dig +short "$CERT_CN")
+    elif expr "$OPTARG" : '[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*$' >/dev/null; then
         IPS=.
         set $OPTARG
         for quad in 1 2 3 4; do
@@ -106,11 +113,11 @@ if [[ ! -z $IP4 ]]; then
             fi
         done
         IP4=$OPTARG
-        IP4_log="  IP4: $IP4\n"
     else
         printf 'ERROR: Invalid IPv4 address provided: %s\n' "$OPTARG"
         exit 2
     fi
+    IP4_log="  IP4: $IP4\n"
 else
     IP4_log=""
 fi
