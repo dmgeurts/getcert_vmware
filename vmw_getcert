@@ -124,7 +124,7 @@ else
 fi
 
 # Check that a single valid FQDN was parsed for the VMware REST API interface
-if [[ -z $@ ]]
+if [[ -z $@ ]]; then
     VMW_MGMT="$CERT_CN"
 elif grep -q -P '(?=^.{4,253}$)(^((?!-)[a-zA-Z0-9-]{1,63}\.)+[a-zA-Z]{2,63}$)' <<< "$@"; then
     VMW_MGMT="${@,,}"
