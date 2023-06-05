@@ -87,16 +87,16 @@ fi
 
 # Check that credentials are available
 CRED_FILE=${CRED_FILE:=/etc/ipa/.vmwrc}
-if [[ ! -f $CRED_FILE]]; then
-    wlog "ERROR: File not found: $CRED_FILE\n"
+if [[ ! -f "$CRED_FILE" ]]; then
+    printf 'ERROR: File not found: %s\n' "$CRED_FILE"
     exit 5
 fi
 if grep -q -P '^key=' "$CRED_FILE"; then
-    (( $VERBOSE > 0 )) && wlog "Key found in: $CRED_FILE\n"
+    (( $VERBOSE > 0 )) && printf 'Key found in: %s\n' "$CRED_FILE"
 elif (grep -q -P '^username=' "$CRED_FILE") && (grep -q -P '^password=' "$CRED_FILE"); then
-    (( $VERBOSE > 0 )) && wlog "Credentials found in: $CRED_FILE\n"
+    (( $VERBOSE > 0 )) && printf 'Credentials found in: %s\n' "$CRED_FILE"
 else
-    wlog "ERROR: No authentication details found in: $CRED_FILE\n"
+    printf 'ERROR: No authentication details found in: %s\n' "$CRED_FILE"
     exit 5
 fi
 
