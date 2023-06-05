@@ -81,8 +81,8 @@ if AUTH64=$(grep -P '^key=' "$CRED_FILE"); then
         (( $VERBOSE > 0 )) && wlog "Key found in: $CRED_FILE\n"
     fi
 else
-    API_UID=(grep -P '^username=' "$CRED_FILE")
-    API_PWD=(grep -P '^password=' "$CRED_FILE")
+    API_UID=$(grep -P '^username=' $CRED_FILE)
+    API_PWD=$(grep -P '^password=' $CRED_FILE)
     AUTH64=$(base64 <<< "${API_UID#username=}:${API_PWD#password=}")
     API_UID="" && API_PWD=""
     if [[ -n ${AUTH64+x} ]]; then
