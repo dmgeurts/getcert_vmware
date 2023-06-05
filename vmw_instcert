@@ -83,7 +83,7 @@ if AUTH64=$(grep -P '^key=' "$CRED_FILE"); then
 else
     UID=(grep -P '^username=' "$CRED_FILE")
     PWD=(grep -P '^password=' "$CRED_FILE")
-    AUTH64=(base64 <<< "${UID#username=}:${PWD#password=}")
+    AUTH64=$(base64 <<< "${UID#username=}:${PWD#password=}")
     UID="" && PWD=""
     if [[ -n ${AUTH64+x} ]]; then
         (( $VERBOSE > 0 )) && wlog "Credentials found in: $CRED_FILE\n"
