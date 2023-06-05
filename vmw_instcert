@@ -83,12 +83,13 @@ if AUTH64=$(grep -P '^key=' "$CRED_FILE"); then
 else
     API_UID=$(grep -P '^username=' $CRED_FILE)
     API_PWD=$(grep -P '^password=' $CRED_FILE)
-    AUTH64=$(base64 <<< "${API_UID#username=}:${API_PWD#password=}")
-    API_UID="" && API_PWD=""
+    # Disable history expansion to cater to passwords with a '!'
+    set +H
+    AUTH64=$(printf "${API_UID#username=}:${API_PWD#password=}" | base64)
     if [[ -n ${AUTH64+x} ]]; then
-        (( $VERBOSE > 0 )) && wlog "Credentials found in: $CRED_FILE => $API_UID\n" && \
-            printf 'Credentials found in: %s => %S\n' "$CRED_FILE" "$API_UID"
+        (( $VERBOSE > 0 )) && wlog "Credentials found in: $CRED_FILE => ${API_UID#username=}\n"
     fi
+    API_UID="" && API_PWD=""
 fi
 if [[ -z ${AUTH64+x} ]]; then
     wlog "ERROR: No credentials found in: $CRED_FILE\n"
