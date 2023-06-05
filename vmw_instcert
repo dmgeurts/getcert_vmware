@@ -116,7 +116,7 @@ AUTH_TYPE=${AUTH_TYPE:=Basic}
 # The only supported method at the moment.
 # https://developer.vmware.com/apis/vsphere-automation/latest/cis/api/session/post/
 if [[ "$AUTH_TYPE" == "Basic" ]]; then
-    (( $VERBOSE > 0 )) && printf 'curl -k -X POST https://%s/api/session -H "Authorization: %s %s"' "$VMW_MGMT" "$AUTH_TYPE" "$AUTH64"
+    (( $VERBOSE > 0 )) && printf 'curl -k -X POST https://%s/api/session -H "Authorization: %s %s"\n' "$VMW_MGMT" "$AUTH_TYPE" "$AUTH64"
     SKEY=$(curl -sk -X POST https://$VMW_MGMT/api/session -H "Authorization: $AUTH_TYPE $AUTH64")
 else
     wlog "ERROR: Wrong authentication type: $AUTH_TYPE\n"
