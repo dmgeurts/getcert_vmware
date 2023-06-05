@@ -152,8 +152,8 @@ fi
 printf '\n'
 
 # Upload it to the vCenter appliance
-URL="https://$VMW_MGMT/api/vcenter/certificate-managemente/vcenter"
-OUTPUT=$(curl -sk -X POST "$URL/trusted-root-chain" -H "vmware-api-session-id: $SKEY" -H "Content-Type: application/json" -d "$ROOT_JSON")
+URL="https://$VMW_MGMT/api/vcenter/certificate-management/vcenter"
+OUTPUT=$(curl -sk -X POST "$URL/trusted-root-chains" -H "vmware-api-session-id: $SKEY" -H "Content-Type: application/json" -d "$ROOT_JSON")
 ROOT_STATUS=$?
 wlog "XML API output for root certificate: $OUTPUT\n"
 if [ $ROOT_STATUS -eq 0 ]; then
