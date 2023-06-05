@@ -143,21 +143,21 @@ else
     KEY="$(awk -v ORS='\\n' '1' $KEY_FILE)"
     CRT="$(awk -v ORS='\\n' '1' $CRT_FILE)"
     CRT_JSON_FMT='{"cert":"%s","key":"%s"}'
-    CRT_JSON=`$(printf "$CRT_JSON_FMT" "$CRT" "$KEY")`
+    CRT_JSON=$(printf "$CRT_JSON_FMT" "$CRT" "$KEY")
     # Do the same for the root certificate
     ROOT="$(awk -v ORS='\\n' '1' /etc/ipa/ca.crt)"
     ROOT_JSON_FMT='{"cert_chain":["%s"]}'
-    ROOT_JSON=`$(printf "$ROOT_JSON_FMT" "$ROOT")`
+    ROOT_JSON=$(printf "$ROOT_JSON_FMT" "$ROOT")
 fi
 printf '\n'
 
 # Upload it to the vCenter appliance
 URL="https://$VMW_MGMT/api/vcenter/certificate-managemente/vcenter"
-OUTPUT=$(curl -k -X POST "$URL/trusted-root-chain" -H "vmware-api-session-id: $SKEY" -H "Content-Type: application/json" -d "$ROOT_JSON")
+OUTPUT=$(curl -sk -X POST "$URL/trusted-root-chain" -H "vmware-api-session-id: $SKEY" -H "Content-Type: application/json" -d "$ROOT_JSON")
 ROOT_STATUS=$?
 wlog "XML API output for root certificate: $OUTPUT\n"
 if [ $ROOT_STATUS -eq 0 ]; then
-    OUTPUT=$(curl -k -X PUT "$URL/tls" -H "vmware-api-session-id: $SKEY" -H "Content-Type: application/json" -d "$CRT_JSON")
+    OUTPUT=$(curl -sk -X PUT "$URL/tls" -H "vmware-api-session-id: $SKEY" -H "Content-Type: application/json" -d "$CRT_JSON")
     CRT_STATUS=$?
     wlog "XML API output for certificate: $OUTPUT\n"
     if [ $CRT_STATUS -eq 0 ]; then
