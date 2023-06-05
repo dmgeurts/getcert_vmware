@@ -3,7 +3,7 @@
 ## Usage info
 show_help() {
 cat << EOF
-Usage: ${0##*/} [-hv] -c CERT_CN [-a CRED_FILE] [OPTIONS] FQDN
+Usage: ${0##*/} [-hv] -c CERT_CN [-a CRED_FILE] [OPTIONS] [FQDN]
 This script requests a certificate from FreeIPA using ipa-getcert and calls a
 partner script to deploy the certificate to a VMware appliance via REST API.
 
