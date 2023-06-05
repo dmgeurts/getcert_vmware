@@ -239,4 +239,4 @@ if [[ "$CERT_STAT" != "monitoring" ]]; then
     printf ' - If stuck in POST_SAVED_CERT, then the post-save command likely failed.\n   Check /var/log/vmw_instcert.log, CPU load and abort the post-save process.\n\n'
     exit 10
 fi
-echo "FINISHED: Check the Vmware appliance to see if the certificate is in use."
+echo "FINISHED: Check the VMware appliance to see if the certificate is in use."
