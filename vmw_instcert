@@ -71,7 +71,7 @@ fi
 
 # Check that credentials are available
 CRED_FILE=${CRED_FILE:=/etc/ipa/.vmwrc}
-if [[ ! -f $CRED_FILE]]; then
+if [[ ! -f "$CRED_FILE" ]]; then
     wlog "ERROR: File not found: $CRED_FILE\n"
     exit 5
 fi
