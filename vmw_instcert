@@ -86,7 +86,8 @@ else
     AUTH64=$(base64 <<< "${API_UID#username=}:${API_PWD#password=}")
     API_UID="" && API_PWD=""
     if [[ -n ${AUTH64+x} ]]; then
-        (( $VERBOSE > 0 )) && wlog "Credentials found in: $CRED_FILE => $API_UID\n"
+        (( $VERBOSE > 0 )) && wlog "Credentials found in: $CRED_FILE => $API_UID\n" && \
+            printf 'Credentials found in: %s => %S\n' "$CRED_FILE" "$API_UID"
     fi
 fi
 if [[ -z ${AUTH64+x} ]]; then
@@ -114,9 +115,8 @@ AUTH_TYPE=${AUTH_TYPE:=Basic}
 # The only supported method at the moment.
 # https://developer.vmware.com/apis/vsphere-automation/latest/cis/api/session/post/
 if [[ "$AUTH_TYPE" == "Basic" ]]; then
-    TRY="curl -k -X POST https://$VMW_MGMT/api/session -H \"Authorization: $AUTH_TYPE $AUTH64\""
-    (( $VERBOSE > 0 )) && printf 'Obtaining session key with: %s\n' "$TRY"
-    SKEY=$($TRY)
+    (( $VERBOSE > 0 )) && printf 'curl -k -X POST https://%s/api/session -H "Authorization: %s %s"' "$VMW_MGMT" "$AUTH_TYPE" "$AUTH64"
+    SKEY=$(curl -k -X POST https://$VMW_MGMT/api/session -H "Authorization: $AUTH_TYPE $AUTH64")
 else
     wlog "ERROR: Wrong authentication type: $AUTH_TYPE\n"
     exit 9
