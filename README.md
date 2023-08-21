@@ -8,9 +8,9 @@ Adapted from https://github.com/dmgeurts/getcert_paloalto
 
 # FreeIPA Certificates for vCenter
 
-While free LetsEncrypt certificates are great, when you have an internal CA then this opens the door for using your own certificates. vCenter should never be publily exposed, so using an internal CA stands to reason.
+While free LetsEncrypt certificates are great, when you have an internal CA then this opens the door for using your own certificates. vCenter should never be publicly exposed, so using an internal CA stands to reason.
 
-Not using LetsEncrypt avoids problems with permitting ingress HTTP-01 traffic or setting up DNS-01 verification, both have their uses and while I use both, FreeIPA PKI is a useful local solution for a local problem. It also avoids exposing internal management dns records externally, all Let's Encrypt issued certificate domains are publicly listed.
+Not using LetsEncrypt avoids problems with permitting ingress HTTP-01 traffic or setting up DNS-01 verification, both have their uses and while I use both, FreeIPA PKI is a useful local solution for a local problem. It also avoids exposing internal management dns records externally, all Let's Encrypt-issued certificate domains are publicly listed.
 
 The following will detail how to automate the ipa-getcert certificate process for VMware devices that support the vSphere REST API.
 
