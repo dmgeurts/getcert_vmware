@@ -29,7 +29,7 @@ Image TBD
   + Manually create the host with the FQDN of vCenter.
     + Edit the host to add the enrolled host under 'managed by'.
   + Create a Service Principal for vCenter: `HTTP/fqdn@DOMAIN.COM`
-    + Edit it Service Principal to add the enrolled host under 'managed by'.
+    + Edit the Service Principal to add the enrolled host under 'managed by'.
 
 + vCenter credentials:
   + With the following vCenter privileges:
