@@ -90,7 +90,7 @@ OPTIONS:
     -v                Verbose mode.
 ```
 
-At a minimum vmw_getcert can be run as: `sudo vmw_getcert -c vcenter.domain.com` This will look for API credentials in `/etc/api/.vmwrc` and will assume that vcenter can be reached via the common name given for the certificate. If you want to include the IPv4 address in the SAN add the `-i` option to have the command name resolved to the IPv4 address.
+At a minimum vmw_getcert can be run as: `vmw_getcert -c vcenter.domain.com` This will look for API credentials in `/etc/api/.vmwrc` and will assume that vcenter can be reached via the common name given for the certificate. If you want to include the IPv4 address in the SAN add the `-i` option to have the common name resolved to the IPv4 address.
 
 **Note:** FreeIPA only supports RSA keys. Hence the -G option is in preparation of future support of other keys. [More info](https://www.reddit.com/r/FreeIPA/comments/134puyw/freeipa_ca_pki_ecdsa_support/).
 
@@ -124,7 +124,7 @@ sudo ipa-getcert list [-i Request_ID | -f Path_to_cert_file]
 ```
 
 # Prepare the Script for Execution
-+ In an environment with centralised credentials it's best to not run code under a user that may be removed. Install the code to a common location: `/usr/local/bin` is assumed. When using a different location, change variable INST_CERT in vmw_getcert accordingly.
++ In an environment with centralised credentials it's best to run code under a user that will never be removed. Install the code to a common location: `/usr/local/bin` is assumed. When using a different location, change the variable INST_CERT in vmw_getcert accordingly.
   + Create a new role with the following privileges in vCenter for the API user:
     + Certificate Managent - Manage (below Admins priv)
     + Certificate Management - Administer (Admins priv)
@@ -157,7 +157,7 @@ vmw_instcert will log to `/var/log/vmw_instcert.log`.
 
 vmw_getcert doesn't log as it's expected to be run once (manually).
 ```
-user@host:~$ sudo vmw_instcert -v -c vcenter.domain.local vcenter.domain.local
+user@host:~$ vmw_instcert -v -c vcenter.domain.local vcenter.domain.local
 START of vmw_instcert.
 Certificate Common Name: vcenter.domain.local
 Credentials found in: /etc/ipa/.vmwrc => vmware-api-user-ssl
